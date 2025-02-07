@@ -54,6 +54,7 @@ for project in df_projects["listname"]:
         "created_at": repo_data['created_at'],
         "project_size": repo_data['size'],
         "num_forks": repo_data['forks_count'],
+        "default_branch": repo_data['default_branch'],
         "last_update": repo_data['updated_at'],
         "repo_url": repo_data['html_url']
     }
