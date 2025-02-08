@@ -249,14 +249,6 @@ class API:
                         and "behind_by" in compare_response.json()
                     )
 
-                    # Check the commit comments
-                    comments_url = (
-                        self.url
-                        + f"{fork_owner}/{fork_name}/commits/{commit_sha}/comments"
-                    )
-                    comments_data = self.get_all_paginated_items(comments_url)
-                    comments = [comment["body"] for comment in comments_data]
-
                     # Extract commit information
                     commit_info = {
                         "fork_parent_id": fork_parent_id,
@@ -267,7 +259,6 @@ class API:
                         "commit_size": commit_data["stats"]["total"],
                         "commit_create_at": commit["commit"]["author"]["date"],
                         "commit_pushed_at": commit["commit"]["committer"]["date"],
-                        "commit_comments": comments,
                         "is_in_main_repo": is_in_main_repo,
                         "is_in_main_branch_main_repo": is_in_main_branch_main_repo,
                     }
