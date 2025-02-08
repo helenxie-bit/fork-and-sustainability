@@ -57,7 +57,7 @@ def resume_from_checkpoint(resume_log_path, with_page=False):
     return (None, 1) if with_page else None
 
 
-def handle_repo_data(github_api):
+def handle_repo_data(github_api, teammate):
     """Handles repo general information collection."""
     check_file_exists(
         constants.PROJECTS_LIST, f"{constants.PROJECTS_LIST} does not exist."
@@ -72,7 +72,7 @@ def handle_repo_data(github_api):
         )
 
 
-def handle_fork_data(github_api):
+def handle_fork_data(github_api, teammate):
     """Handles fork data collection."""
     check_file_exists(
         constants.REPO_CSV_PATH,
@@ -88,19 +88,21 @@ def handle_fork_data(github_api):
         )
 
 
-def handle_commit_data(github_api):
+def handle_commit_data(github_api, teammate):
     """Handles commit data collection."""
     check_file_exists(
         constants.REPO_CSV_PATH,
         f"{constants.REPO_CSV_PATH} does not exist. Please run choice 1 first.",
     )
     df_repos = pd.read_csv(constants.REPO_CSV_PATH)
+    filter_repos = df_repos[df_repos["teammate"] == teammate]
 
     check_file_exists(
         constants.FORK_CSV_PATH,
         f"{constants.FORK_CSV_PATH} does not exist. Please run choice 2 first.",
     )
     df_forks = pd.read_csv(constants.FORK_CSV_PATH)
+    filter_forks = df_forks[df_forks["teammate"] == teammate]
 
     # Resume from last processed fork
     resume_log_path = constants.RESUME_LOG_PATH_COMMIT
@@ -109,7 +111,7 @@ def handle_commit_data(github_api):
     )
 
     for fork_id, fork_owner, fork_name in zip(
-        df_forks["fork_id"], df_forks["fork_owner"], df_forks["fork_name"]
+        filter_forks["fork_id"], filter_forks["fork_owner"], filter_forks["fork_name"]
     ):
         # Resume processing if interrupted
         if last_processed_fork and str(fork_id) != last_processed_fork:
@@ -144,13 +146,14 @@ def handle_commit_data(github_api):
         last_processed_page = None  # Reset last processed page
 
 
-def handle_repo_pr_data(github_api):
+def handle_repo_pr_data(github_api, teammate):
     """Handles repo PR data collection."""
     check_file_exists(
         constants.REPO_CSV_PATH,
         f"{constants.REPO_CSV_PATH} does not exist. Please run choice 1 first.",
     )
     df_repos = pd.read_csv(constants.REPO_CSV_PATH)
+    filter_repos = df_repos[df_repos["teammate"] == teammate]
 
     # Resume from last processed fork
     resume_log_path = constants.RESUME_LOG_PATH_REPO_PR
@@ -159,7 +162,7 @@ def handle_repo_pr_data(github_api):
     )
 
     for repo_id, repo_owner, repo_name in zip(
-        df_repos["repo_id"], df_repos["repo_owner"], df_repos["repo_name"]
+        filter_repos["repo_id"], filter_repos["repo_owner"], filter_repos["repo_name"]
     ):
         # Resume processing if interrupted
         if last_processed_repo and str(repo_id) != last_processed_repo:
@@ -178,23 +181,24 @@ def handle_repo_pr_data(github_api):
         last_processed_page = None  # Reset last processed page
 
 
-def handle_fork_pr_data(github_api):
+def handle_fork_pr_data(github_api, teammate):
     """Handles fork PR data collection."""
     check_file_exists(
         constants.FORK_CSV_PATH,
         f"{constants.FORK_CSV_PATH} does not exist. Please run choice 2 first.",
     )
     df_forks = pd.read_csv(constants.FORK_CSV_PATH)
+    filter_forks = df_forks[df_forks["teammate"] == teammate]
 
     # Resume from last processed fork
     resume_log_path = constants.RESUME_LOG_PATH_FORK_PR
     last_processed_fork = resume_from_checkpoint(resume_log_path, with_page=False)
 
     for fork_parent_id, fork_id, fork_owner, fork_name in zip(
-        df_forks["fork_parent_id"],
-        df_forks["fork_id"],
-        df_forks["fork_owner"],
-        df_forks["fork_name"],
+        filter_forks["fork_parent_id"],
+        filter_forks["fork_id"],
+        filter_forks["fork_owner"],
+        filter_forks["fork_name"],
     ):
         # Resume processing if interrupted
         if last_processed_fork and str(fork_id) != last_processed_fork:
@@ -232,7 +236,7 @@ def dataget(args):
 
     handler = choice_handlers.get(args.choice)
     if handler:
-        handler(github_api)
+        handler(github_api, args.teammate)
     else:
         print("Error: Invalid choice.")
         exit(1)
@@ -255,6 +259,11 @@ def main():
         type=int,
         choices=[1, 2, 3, 4, 5],
         help="Specify the data to be collected (1: repo, 2: fork, 3: commit, 4: repo PR, 5: fork PR)",
+    )
+    data_get.add_argument(
+        "--teammate",
+        type=str,
+        help="Specify the teammate responsible for the data collection",
     )
 
     args = parser.parse_args()
