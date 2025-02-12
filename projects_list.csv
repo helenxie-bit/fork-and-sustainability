@@ -75,7 +75,7 @@ listid,listname,pj_alias,status,start_date,end_date,dev_is_available,commit_is_a
 		(Olivier Lamy)
 		 
 	   ","Gobblin is a distributed data integration framework that simplifies common aspects of big data integration such as data ingestion, replication, organization and lifecycle management for both streaming and batch data ecosystems.",,,http://incubator.apache.org/projects/gobblin.html,https://github.com/apache/incubator-Gobblin
-16,incubator-hivemall,heron,0,6/23/17,,t,t,f,"Incubator
+16,incubator-heron,heron,0,6/23/17,,t,t,f,"Incubator
 		
 		(Julien Le Dem)
 		 
@@ -609,7 +609,7 @@ listid,listname,pj_alias,status,start_date,end_date,dev_is_available,commit_is_a
 	   ","Flink is an open source system for expressive, declarative, fast, and efficient data analysis. Stratosphere combines the scalability and programming flexibility of distributed MapReduce-like platforms with the efficiency, out-of-core execution, and query optimization capabilities found in parallel databases.  Flink was originally known as Stratosphere when it entered the Incubator.
 		 
 	   ",,,http://incubator.apache.org/projects/flink.html,https://github.com/apache/Flink
-109,Flume,flume,1,6/13/11,6/20/12,t,t,f,"Incubator
+109,Logging-Flume,flume,1,6/13/11,6/20/12,t,t,f,"Incubator
 		 
 	   ","Flume is a distributed, reliable, and available system for efficiently collecting, aggregating, and moving large amounts of log data from many different sources to a centralized data store.
 		 
@@ -1311,7 +1311,7 @@ listid,listname,pj_alias,status,start_date,end_date,dev_is_available,commit_is_a
 	   ","An Open Source system for managing digital identities in enterprise environments, implemented in JEE technology
 		 
 	   ",,,http://incubator.apache.org/projects/syncope.html,https://github.com/apache/Syncope
-226,SystemML,systemml,1,11/2/15,5/18/17,t,t,f,"Incubator
+226,Systemds,systemds,1,11/2/15,5/18/17,t,t,f,"Incubator
 		
 		(Luciano Resende)
 		 

@@ -1,13 +1,16 @@
 ## **Data Collection**
 This project provides five options for collecting GitHub repository data:
 
-1. **Repository information** (repo) ✅ *(Completed)*
-2. **Fork information** (fork) ✅ *(Completed)*
-3. **Commit history** (commit) ⏳ *(In Progress)*
-4. **Pull requests for repositories** (repo PR) ⏳ *(In Progress)*
-5. **Pull requests for forks** (fork PR) ⏳ *(In Progress)*
+1. **Repo information** ✅ *(Completed)*
+2. **Fork information** ✅ *(Completed)*
+3. **Repo commit information** ⏳ *(In Progress)*
+4. **Fork commit information** ⏳ *(In Progress)*
+5. **Repo PR information** ⏳ *(In Progress)*
+6. **Fork PR information** ⏳ *(In Progress)*
+7. **Star information** ✅ *(Completed)*
+8. **Release information** ✅ *(Completed)*
 
-Tasks **3, 4, and 5** are distributed among team members based on the number of forks to ensure a balanced workload.
+Tasks **3, 4, 5, and 6** are distributed among team members based on the number of forks to ensure a balanced workload.
 
 ### **Usage Instructions**
 #### **1. Clone the Repo to Local**
@@ -37,10 +40,10 @@ For a permanent setup, add the export command to `~/.bashrc` or `~/.zshrc` (Linu
 Use the following command to collect data:
 
 ```bash
-python CLI.py dataget --choice <3-5> --teammate <your_name>
+python CLI.py dataget --choice <3-6> --name <your_name>
 ```
 
-Replace `<3-5>` with the desired data type.
+Replace `<3-6>` with the desired data type.
 Replace `<your_name>` with your assigned name (**helen, joseph, junlong, simmon, sophie**).
 
 **Note:**
