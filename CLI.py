@@ -14,11 +14,6 @@ def check_file_exists(filepath, msg):
         exit(1)
 
 
-def datavis(args):
-    """Handles dataset visualization (to be implemented)."""
-    pass
-
-
 def API_check(args):
     """Handles basic API checks."""
     load_dotenv()
@@ -217,6 +212,85 @@ def handle_fork_pr_data(github_api, teammate):
         )
 
 
+def preprocess_sustainability_data(teammate=None):
+    # Load datasets
+    repo_info = pd.read_csv(constants.REPO_CSV_PATH)
+    project_list = pd.read_csv(constants.PROJECTS_LIST)
+    star_info = pd.read_csv(constants.STAR_CSV_PATH)
+    release_info = pd.read_csv(constants.RELEASE_CSV_PATH)
+
+    # Merge 'status' from project_list into repo_info
+    project_list['listname_lower'] = project_list['listname'].str.lower()
+    if teammate is not None:
+        repo_info = repo_info[repo_info['teammate'] == teammate]
+    repo_info = repo_info.merge(project_list[['listname_lower', 'status']], left_on='repo_name', right_on='listname_lower', how='left')
+
+    # Convert 'starred_at' and 'release_published_at' to datetime
+    star_info['starred_at'] = pd.to_datetime(star_info['starred_at'])
+    release_info['release_published_at'] = pd.to_datetime(release_info['release_published_at'])
+
+    # Extract year from 'starred_at' and 'release_published_at'
+    star_info['year'] = star_info['starred_at'].dt.year
+    release_info['year'] = release_info['release_published_at'].dt.year
+
+    # Define the years of interest
+    years_of_interest = [2022, 2023, 2024]
+    last_year = 2024
+
+    # Filter star_info for the years of interest
+    filtered_stars = star_info[star_info['year'].isin(years_of_interest)]
+    stars_per_year = filtered_stars.groupby(['repo_id', 'year']).size().unstack(fill_value=0)
+    for year in years_of_interest:
+        if year not in stars_per_year.columns:
+            stars_per_year[year] = 0
+    stars_per_year = stars_per_year[years_of_interest]
+
+    # Check if the number of stars in each of the last 3 years is greater than 0
+    stars_per_year['stars_last_3_years'] = stars_per_year.values.tolist()
+    stars_per_year['all_years_gt_zero'] = stars_per_year[years_of_interest].gt(0).all(axis=1)
+
+    # Merge the aggregated star information into 'repo_info'
+    stars_aggregated = stars_per_year[['stars_last_3_years', 'all_years_gt_zero']].reset_index()
+    repo_info = repo_info.merge(stars_aggregated, on='repo_id', how='left')
+    repo_info['stars_last_3_years'] = repo_info['stars_last_3_years'].apply(lambda x: x if isinstance(x, list) else [0, 0, 0]) # Fill NaN values with appropriate defaults
+    repo_info['all_years_gt_zero'] = repo_info['all_years_gt_zero'].fillna(False) # Fill NaN values with appropriate defaults
+
+    # Filter release_info for the last year
+    releases_last_year = release_info[release_info['year'] == last_year]
+    releases_per_repo_last_year = releases_last_year.groupby('repo_id').size().reset_index(name='releases_last_year')
+
+    # Merge the release counts into 'repo_info'
+    repo_info = repo_info.merge(releases_per_repo_last_year, on='repo_id', how='left')
+    repo_info['releases_last_year'] = repo_info['releases_last_year'].fillna(0).astype(int) # Fill NaN values with 0 for 'releases_last_year'
+
+    # Define sustainability criteria
+    repo_info['is_sustaining'] = (
+        (repo_info['status'] != 2) &
+        (~repo_info['is_archived']) &
+        (repo_info['all_years_gt_zero'] | (repo_info['releases_last_year'] > 0))
+    ).astype(int)
+
+    # Reorder columns if necessary
+    new_order = [
+        'repo_id', 'repo_owner', 'repo_name', 'is_sustaining', 'is_archived', 'status',
+        'num_stars', 'stars_last_3_years', 'releases_last_year'
+    ]
+    repo_info = repo_info[new_order]
+
+    # Save the updated DataFrame to a CSV file
+    repo_info.to_csv(constants.SUSTAINABILITY_CSV_PATH, index=False)
+
+    # Display the updated DataFrame
+    print(repo_info.head())
+
+
+def preprocess_fork_data(args):
+    pass
+
+def preprocess_final_data(args):
+    pass
+
+
 def dataget(args):
     """Handles data collection based on the specified case."""
     load_dotenv()
@@ -242,6 +316,18 @@ def dataget(args):
         exit(1)
 
 
+def datapre(args):
+    """Handles dataset preprocessing (to be implemented)."""
+    preprocess_sustainability_data(args.teammate if args.teammate else None)
+    preprocess_fork_data(args)
+    preprocess_final_data(args)
+
+
+def datavis(args):
+    """Handles dataset visualization (to be implemented)."""
+    pass
+
+
 # main entry point for all scripts
 def main():
     parser = argparse.ArgumentParser(
@@ -251,8 +337,7 @@ def main():
         dest="subparser_name", required=True, help="available commands"
     )
 
-    # sub parser for dataset analysis
-    data_vis = subparsers.add_parser("datavis", help="Visualization of dataset")
+    # sub parser for data collection
     data_get = subparsers.add_parser("dataget", help="Get dataset")
     data_get.add_argument(
         "--choice",
@@ -266,9 +351,19 @@ def main():
         help="Specify the teammate responsible for the data collection",
     )
 
+    # sub parser for data preprocessing
+    data_pre = subparsers.add_parser(
+        "datapre", help="Preprocessing of dataset"
+    )
+    
+    # sub parser for dataset analysis
+    data_vis = subparsers.add_parser("datavis", help="Visualization of dataset")
+
     args = parser.parse_args()
     if args.subparser_name == "datavis":
         datavis(args)
+    elif args.subparser_name == "datapre":
+        datapre(args)
     elif args.subparser_name == "dataget":
         dataget(args)
 
