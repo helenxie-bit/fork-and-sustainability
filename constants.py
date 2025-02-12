@@ -16,3 +16,7 @@ RESUME_LOG_PATH_REPO_PR = data_dir + "resume_log_repo_pr.txt"
 RESUME_LOG_PATH_FORK_PR = data_dir + "resume_log_fork_pr.txt"
 RESUME_LOG_PATH_STAR = data_dir + "resume_log_star.txt"
 RESUME_LOG_PATH_RELEASE = data_dir + "resume_log_release.txt"
+
+SUSTAINABILITY_CSV_PATH = data_dir + "9_sustainability_data.csv"
+REPO_FORK_COMMIT_PR_CSV_PATH = data_dir + "10_repo_fork_commit_pr_info.csv"
+FINAL_CSV_PATH = data_dir + "11_final_data.csv"
