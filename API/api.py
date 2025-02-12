@@ -36,7 +36,9 @@ class API:
         retries = 0
 
         while retries < max_retries:
-            response = requests.get(url, headers=self.headers if not headers else headers)
+            response = requests.get(
+                url, headers=self.headers if not headers else headers
+            )
 
             if response.status_code == 200 or response.status_code == 404:
                 return response
@@ -98,7 +100,13 @@ class API:
 
         # Convert data to DataFrame and save to CSV
         df = pd.DataFrame(data)
-        df.to_csv(csv_path, mode="a", header=not file_exists, index=False, quoting=csv.QUOTE_ALL)
+        df.to_csv(
+            csv_path,
+            mode="a",
+            header=not file_exists,
+            index=False,
+            quoting=csv.QUOTE_ALL,
+        )
         return True
 
     def get_repo_data(self, repo_owner, repo_name, repo_csv_path, missing_csv_path):
@@ -234,17 +242,25 @@ class API:
                         "repo_owner": repo_owner,
                         "repo_name": repo_name,
                         "commit_sha": commit_sha,
-                        "commit_author": (commit.get("author") or {}).get("login", "unknown"),
-                        "commit_author_id": (commit.get("author") or {}).get("id", "unknown"),
-                        "commit_size": commit_data.get("stats", {}).get("total", 0), # (TODO): Should we keep it or delete it to save requests?
+                        "commit_author": (commit.get("author") or {}).get(
+                            "login", "unknown"
+                        ),
+                        "commit_author_id": (commit.get("author") or {}).get(
+                            "id", "unknown"
+                        ),
+                        "commit_size": commit_data.get("stats", {}).get(
+                            "total", 0
+                        ),  # (TODO): Should we keep it or delete it to save requests?
                         "commit_created_at": commit["commit"]["author"]["date"],
-                        "commit_pushed_at": commit["commit"]["committer"]["date"]
+                        "commit_pushed_at": commit["commit"]["committer"]["date"],
                     }
                     commits.append(commit_info)
 
                 self.save_output(commits, repo_commit_csv_path)
 
-                print(f"✅ Page {page} of {repo_owner}/{repo_name} saved to {repo_commit_csv_path}")
+                print(
+                    f"✅ Page {page} of {repo_owner}/{repo_name} saved to {repo_commit_csv_path}"
+                )
 
                 if len(commits) < 100:  # No more pages
                     with open(resume_log_path, "w") as f:
@@ -253,12 +269,12 @@ class API:
 
             page += 1
             with open(resume_log_path, "w") as f:
-                    f.write(f"{repo_id},{page}")
+                f.write(f"{repo_id},{page}")
 
             time.sleep(0.1)  # Avoid hitting concurrent request limit
-        
+
         print(f"🚀 Finished processing commits of {repo_owner}/{repo_name}")
-    
+
     def get_fork_commit_data(
         self,
         repo_id,
@@ -273,18 +289,27 @@ class API:
         resume_log_path,
     ):
         """Get fork commit information that is NOT in the main repository and save to CSV."""
-        compare_url = self.url + f"{repo_owner}/{repo_name}/compare/{repo_default_branch}...{fork_owner}:{fork_default_branch}"
+        compare_url = (
+            self.url
+            + f"{repo_owner}/{repo_name}/compare/{repo_default_branch}...{fork_owner}:{fork_default_branch}"
+        )
         compare_response = self.github_api_request(compare_url)
 
         if compare_response.status_code == 200:
             compare_data = compare_response.json()
-            fork_commits = compare_data.get("commits", [])  # Only new commits in the fork
+            fork_commits = compare_data.get(
+                "commits", []
+            )  # Only new commits in the fork
         else:
-            print(f"❌ Error fetching compare data for {fork_owner}/{fork_name} (Error Code: {compare_response.status_code}). Skipping...")
+            print(
+                f"❌ Error fetching compare data for {fork_owner}/{fork_name} (Error Code: {compare_response.status_code}). Skipping..."
+            )
             return
-        
+
         if not fork_commits:
-            print(f"❗ No unique commits found in fork {fork_owner}/{fork_name}. Skipping...")
+            print(
+                f"❗ No unique commits found in fork {fork_owner}/{fork_name}. Skipping..."
+            )
             return
 
         # Process fork commits
@@ -307,13 +332,15 @@ class API:
                 "commit_sha": commit_sha,
                 "commit_author": (commit.get("author") or {}).get("login", "unknown"),
                 "commit_author_id": (commit.get("author") or {}).get("id", "unknown"),
-                #"commit_size": commit_data.get("stats", {}).get("total", 0), # (TODO): Commented out to save requests. Should we add it back?
+                # "commit_size": commit_data.get("stats", {}).get("total", 0), # (TODO): Commented out to save requests. Should we add it back?
                 "commit_created_at": commit["commit"]["author"]["date"],
-                "commit_pushed_at": commit["commit"]["committer"]["date"]
+                "commit_pushed_at": commit["commit"]["committer"]["date"],
             }
             self.save_output([commit_info], fork_commit_csv_path)
-            print(f"✅ Commit {commit_sha} of fork {fork_owner}/{fork_name} saved to {fork_commit_csv_path}")
-        
+            print(
+                f"✅ Commit {commit_sha} of fork {fork_owner}/{fork_name} saved to {fork_commit_csv_path}"
+            )
+
         # Save progress
         with open(resume_log_path, "w") as f:
             f.write(str(fork_id))
@@ -372,9 +399,11 @@ class API:
                     comments = [comment["body"] for comment in comments_data]
 
                     # Replace newline characters within each comment
-                    cleaned_comments = [comment.replace('\n', ' ') for comment in comments]
+                    cleaned_comments = [
+                        comment.replace("\n", " ") for comment in comments
+                    ]
                     # Join the list into a single string with '||' as a delimiter
-                    cleaned_comments_str = '||'.join(cleaned_comments)
+                    cleaned_comments_str = "||".join(cleaned_comments)
 
                     # Extract PR information
                     pr_info = {
@@ -449,17 +478,30 @@ class API:
         print(
             f"🚀 Finished processing PRs of fork {fork_id} of {fork_owner}/{fork_name}"
         )
-    
-    def get_star_data(self, repo_id, repo_owner, repo_name, star_csv_path, resume_log_path, last_processed_page):
+
+    def get_star_data(
+        self,
+        repo_id,
+        repo_owner,
+        repo_name,
+        star_csv_path,
+        resume_log_path,
+        last_processed_page,
+    ):
         """Get stars information of repository and save to CSV."""
         page = last_processed_page if last_processed_page else 1
         while True:
-            stargazers_url = self.url + f"{repo_owner}/{repo_name}/stargazers?per_page=100&page={page}"
+            stargazers_url = (
+                self.url
+                + f"{repo_owner}/{repo_name}/stargazers?per_page=100&page={page}"
+            )
             headers = {
                 "Authorization": f"token {self.token}",
-                "Accept": "application/vnd.github.star+json"
+                "Accept": "application/vnd.github.star+json",
             }
-            stargazers_response = self.github_api_request(url=stargazers_url, headers=headers)
+            stargazers_response = self.github_api_request(
+                url=stargazers_url, headers=headers
+            )
 
             if stargazers_response.status_code == 200:
                 stargazers_data = stargazers_response.json()
@@ -484,7 +526,9 @@ class API:
 
                 self.save_output(stars, star_csv_path)
 
-                print(f"✅ Page {page} of Repository {repo_owner}/{repo_name} information saved to {star_csv_path}")
+                print(
+                    f"✅ Page {page} of Repository {repo_owner}/{repo_name} information saved to {star_csv_path}"
+                )
 
                 if len(stargazers_data) < 100:  # No more pages
                     with open(resume_log_path, "w") as f:
@@ -494,14 +538,20 @@ class API:
             page += 1
             with open(resume_log_path, "w") as f:
                 f.write(f"{repo_id},{page}")
-            
+
             time.sleep(0.1)  # Avoid hitting concurrent request limit
-        
-        print(
-            f"🚀 Finished processing Stars of Repository {repo_owner}/{repo_name}"
-        )
-    
-    def get_release_data(self, repo_id, repo_owner, repo_name, release_csv_path, resume_log_path, last_processed_page):
+
+        print(f"🚀 Finished processing Stars of Repository {repo_owner}/{repo_name}")
+
+    def get_release_data(
+        self,
+        repo_id,
+        repo_owner,
+        repo_name,
+        release_csv_path,
+        resume_log_path,
+        last_processed_page,
+    ):
         """Get release information of repository and save to CSV."""
         page = last_processed_page if last_processed_page else 1
         while True:
@@ -541,7 +591,9 @@ class API:
 
                 self.save_output(releases, release_csv_path)
 
-                print(f"✅ Page {page} of Repository {repo_owner}/{repo_name} information saved to {release_csv_path}")
+                print(
+                    f"✅ Page {page} of Repository {repo_owner}/{repo_name} information saved to {release_csv_path}"
+                )
 
                 if len(releases_data) < 100:  # No more pages
                     with open(resume_log_path, "w") as f:
@@ -553,7 +605,5 @@ class API:
                 f.write(f"{repo_id},{page}")
 
             time.sleep(0.1)  # Avoid hitting concurrent request limit
-        
-        print(
-            f"🚀 Finished processing Releases of Repository {repo_owner}/{repo_name}"
-        )
+
+        print(f"🚀 Finished processing Releases of Repository {repo_owner}/{repo_name}")
