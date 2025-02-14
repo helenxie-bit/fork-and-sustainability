@@ -62,7 +62,7 @@ def handle_repo_data(github_api, name):
     )
     df_projects = pd.read_csv(constants.PROJECTS_LIST)
 
-    for project in df_projects["listname"]:
+    for project in df_projects["pj_alias"]:
         repo_owner = "apache"
         repo_name = project.strip()  # Remove leading/trailing whitespace
         github_api.get_repo_data(
@@ -77,9 +77,10 @@ def handle_fork_data(github_api, name):
         f"{constants.REPO_CSV_PATH} does not exist. Please run choice 1 first.",
     )
     df_repos = pd.read_csv(constants.REPO_CSV_PATH)
+    filter_repos = df_repos[df_repos["teammate"] == name]
 
     for repo_id, repo_owner, repo_name in zip(
-        df_repos["repo_id"], df_repos["repo_owner"], df_repos["repo_name"]
+        filter_repos["repo_id"], filter_repos["repo_owner"], filter_repos["repo_name"]
     ):
         github_api.get_fork_data(
             repo_id, repo_owner, repo_name, constants.FORK_CSV_PATH
@@ -323,13 +324,12 @@ def preprocess_sustainability_data(teammate):
     release_info = pd.read_csv(constants.RELEASE_CSV_PATH)
 
     # Merge 'status' from project_list into repo_info
-    project_list["listname_lower"] = project_list["listname"].str.lower()
     if teammate is not None:
         repo_info = repo_info[repo_info["teammate"] == teammate]
     repo_info = repo_info.merge(
-        project_list[["listname_lower", "status"]],
+        project_list[["pj_alias", "status"]],
         left_on="repo_name",
-        right_on="listname_lower",
+        right_on="pj_alias",
         how="left",
     )
 
