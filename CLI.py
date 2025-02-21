@@ -138,7 +138,7 @@ def handle_fork_commit_data(github_api, name):
     filter_forks = df_forks[df_forks["teammate"] == name]
 
     # Resume from last processed fork
-    resume_log_path = constants.RESUME_LOG_PATH_FORK_COMMIT + f"_{name}.txt"
+    resume_log_path = constants.RESUME_LOG_PATH_FORK_COMMIT
     last_processed_fork = resume_from_checkpoint(resume_log_path, with_page=False)
 
     for fork_id, fork_owner, fork_name in zip(
@@ -170,7 +170,7 @@ def handle_fork_commit_data(github_api, name):
             fork_owner,
             fork_name,
             fork_default_branch,
-            constants.FORK_COMMIT_CSV_PATH + f"_{name}.csv",
+            constants.FORK_COMMIT_CSV_PATH,
             resume_log_path,
         )
 
