@@ -651,7 +651,8 @@ def preprocess_fork_data(teammate):
     )
 
     # Merge the fork-level classifications back into the original fork_data
-    final_df = final_df.merge(
+    final_df = pd.merge(
+        final_df,
         fork_grouped[
             ["fork_id", "contributed_back_fork", "hard_fork", "inactive_fork"]
         ],
@@ -685,21 +686,24 @@ def preprocess_final_data(teammate):
     repo_info = repo_data[
         ["repo_id", "repo_owner", "repo_name", "project_age", "project_size"]
     ]
+    
+    # Remove duplicate forks within each repository
+    fork_data_unique = fork_data.drop_duplicates(subset=["repo_id", "fork_id"])
 
     # Calculate total number of forks for each repo
     total_forks = (
-        fork_data.groupby("repo_id").size().reset_index(name="total_forks_count")
+        fork_data_unique.groupby("repo_id").size().reset_index(name="total_forks_count")
     )
 
     # Calculate annual number of forks for each repo and store in a list
     # Ensure 'fork_created_at' is in datetime format and extract the year
-    fork_data["fork_created_at"] = pd.to_datetime(
-        fork_data["fork_created_at"], utc=True
+    fork_data_unique["fork_created_at"] = pd.to_datetime(
+        fork_data_unique["fork_created_at"], utc=True
     )
-    fork_data["year"] = fork_data["fork_created_at"].dt.year
+    fork_data_unique["year"] = fork_data_unique["fork_created_at"].dt.year
 
     # Filter for the years 2015 to 2024
-    fork_data = fork_data[(fork_data["year"] >= 2015) & (fork_data["year"] <= 2024)]
+    fork_data_unique = fork_data_unique[(fork_data_unique["year"] >= 2015) & (fork_data_unique["year"] <= 2024)]
 
     # Create a DataFrame with all combinations of repo_id and years 2015-2024
     repo_ids = fork_data["repo_id"].unique()
@@ -710,7 +714,7 @@ def preprocess_final_data(teammate):
 
     # Group by 'repo_id' and 'year' to count the number of forks
     annual_forks = (
-        fork_data.groupby(["repo_id", "year"]).size().reset_index(name="num_forks")
+        fork_data_unique.groupby(["repo_id", "year"]).size().reset_index(name="num_forks")
     )
 
     # Merge the complete combinations with the actual fork counts
@@ -732,28 +736,7 @@ def preprocess_final_data(teammate):
     merged_df = pd.merge(repo_info, total_forks, on="repo_id", how="left")
     merged_df = pd.merge(merged_df, annual_forks_list, on="repo_id", how="left")
 
-    # Aggregate commit information at the repo level
-    repo_grouped = (
-        fork_data.groupby("repo_id")
-        .agg(
-            contributed_back_forks_count=("contributed_back_fork", "sum"),
-            hard_forks_count=("hard_fork", "sum"),
-            inactive_forks_count=("inactive_fork", "sum"),
-            merged_commits_count=("is_merged", "sum"),
-            merged_commits_size=(
-                "commit_size",
-                lambda x: x[fork_data["is_merged"]].sum(),
-            ),
-            not_merged_commits_count=("is_not_merged", "sum"),
-            not_contributed_back_commits_count=("not_contributed_back", "sum"),
-        )
-        .reset_index()
-    )
-
-    # Merge with the main DataFrame
-    merged_df = pd.merge(merged_df, repo_grouped, on="repo_id", how="left")
-
-    # Ensure 'commit_pushed_at' is in datetime format
+        # Ensure 'commit_pushed_at' is in datetime format
     fork_data["commit_pushed_at"] = pd.to_datetime(
         fork_data["commit_pushed_at"], utc=True
     )
@@ -787,6 +770,28 @@ def preprocess_final_data(teammate):
     # Filter out commits that don't fall into any interval
     fork_data = fork_data.dropna(subset=["interval_index"])
 
+    # Aggregate commit information at the repo level
+    repo_grouped = (
+        fork_data.groupby("repo_id")
+        .agg(
+            contributed_back_forks_count=("contributed_back_fork", "sum"),
+            hard_forks_count=("hard_fork", "sum"),
+            inactive_forks_count=("inactive_fork", "sum"),
+            merged_commits_count=("is_merged", "sum"),
+            #merged_commits_size=(
+            #    "commit_size",
+            #    lambda x: x[fork_data["is_merged"]].sum(),
+            #),
+            not_merged_commits_count=("is_not_merged", "sum"),
+            not_contributed_back_commits_count=("not_contributed_back", "sum"),
+        )
+        .reset_index()
+        .fillna(0) # Fill NaN values with 0
+    )
+
+    # Merge with the main DataFrame
+    merged_df = pd.merge(merged_df, repo_grouped, on="repo_id", how="left").fillna(0)
+
     # Group by 'repo_id' and 'interval_index' to count commits in each category
     commit_counts = (
         fork_data.groupby(["repo_id", "interval_index"])
@@ -796,6 +801,7 @@ def preprocess_final_data(teammate):
             num_not_contributed_back_commits=("not_contributed_back", "sum"),
         )
         .reset_index()
+        .fillna(0) # Fill NaN values with 0
     )
 
     # Convert the commit count columns to integers
@@ -848,6 +854,14 @@ def preprocess_final_data(teammate):
 
     # Merge the annual commit lists into the main DataFrame
     merged_df = pd.merge(merged_df, commit_counts_list, on="repo_id", how="left")
+
+    # Create a list of ten 0s
+    default_list = [0] * 10
+    # Replace empty lists with a list of ten 0s
+    for col in ["merged_commits_list", "not_merged_commits_list", "not_contributed_back_commits_list"]:
+        merged_df[col] = merged_df[col].apply(
+            lambda x: default_list if (isinstance(x, float) and np.isnan(x)) else x
+        )
 
     # Ensure the relevant columns are in datetime format
     fork_data["commit_related_pr_created_at"] = pd.to_datetime(
@@ -919,12 +933,15 @@ def preprocess_final_data(teammate):
     )
 
     merged_df = pd.merge(merged_df, avg_time_taken_to_merge, on="repo_id", how="left")
+    merged_df["time_taken_to_merge"] = merged_df["time_taken_to_merge"].fillna("Not Apply") # Fill NaN values with "Not Apply"
+
     merged_df = pd.merge(
         merged_df,
         compatibility_issues_ratio[["repo_id", "ratio_of_compatibility_issues"]],
         on="repo_id",
         how="left",
     )
+    merged_df["ratio_of_compatibility_issues"] = merged_df["ratio_of_compatibility_issues"].fillna("Not Apply") # Fill NaN values with "Not Apply"
 
     final_df = pd.merge(
         merged_df,

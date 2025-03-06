@@ -1,16 +1,14 @@
 ## **Data Collection**
-This project provides five options for collecting GitHub repository data:
+This project collects eight kinds of GitHub repository data:
 
 1. **Repo information** ✅ *(Completed)*
 2. **Fork information** ✅ *(Completed)*
-3. **Repo commit information** ⏳ *(In Progress)*
-4. **Fork commit information** ⏳ *(In Progress)*
-5. **Repo PR information** ⏳ *(In Progress)*
-6. **Fork PR information** ⏳ *(In Progress)*
+3. **Repo commit information** ✅ *(Completed)*
+4. **Fork commit information** ✅ *(Completed)*
+5. **Repo PR information** ✅ *(Completed)*
+6. **Fork PR information** ✅ *(Completed)*
 7. **Star information** ✅ *(Completed)*
 8. **Release information** ✅ *(Completed)*
-
-Tasks **3, 4, 5, and 6** are distributed among team members based on the number of forks to ensure a balanced workload.
 
 ### **Usage Instructions**
 #### **1. Clone the Repo to Local**
@@ -40,12 +38,32 @@ For a permanent setup, add the export command to `~/.bashrc` or `~/.zshrc` (Linu
 Use the following command to collect data:
 
 ```bash
-python CLI.py dataget --choice <3-6> --name <your_name>
+python CLI.py dataget --choice <3-6> --name <teammate name>
 ```
-
-Replace `<3-6>` with the desired data type.
-Replace `<your_name>` with your assigned name (**helen, joseph, junlong, simmon, sophie**).
 
 **Note:**
 - If the process hits GitHub API rate limits, it will pause (sleep) and automatically resume from the last checkpoint after a certain period.
 - If you manually interrupt the process and need to resume, simply rerun the same command—no additional configuration is required.
+
+
+## **Data Preprocessing**
+Using the collected data, we constructed measures for fork-related factors and sustainability labels, as summarized in the following table:
+
+| **Type** | **Measure** | **Explanation** |
+|----------|------------|----------------|
+| **General** | **Project Age** | Duration from project creation date to current date. |
+|  | **Project Size** | Total size of the project repository (in KB). |
+| **Fork-Related Factors (RQ1)** | **Total Forks** | Total number of forks. |
+|  | **Annual Forks** | Number of forks created per year. |
+| **Fork-Related Factors (RQ2)** | **Contributed Back Forks** | Number of forks that made commits back. |
+|  | **Hard Forks** | Number of forks meeting criteria: (1) Over 2 pull requests; or (2) Over 100 unmerged commits with project name changed. |
+|  | **Inactive Forks** | Number of forks with no commits. |
+| **Fork-Related Factors (RQ3)** | **Merged Commits** | Total number of merged commits. |
+|  | **Annual Merged Commits** | Number of merged commits pushed per year. |
+|  | **Unmerged Commits** | Total number of unmerged commits. |
+|  | **Annual Unmerged Commits** | Number of unmerged commits pushed per year. |
+|  | **Fork-Only Commits** | Total number of commits exclusive to forks. |
+|  | **Annual Fork-Only Commits** | Number of commits exclusive to forks per year. |
+| **Fork-Related Factors (RQ4)** | **Average Time Taken to Merge** | Average time from pull request creation to merge. |
+| **Fork-Related Factors (RQ5)** | **Ratio of Compatibility Issues** | Proportion of unmerged commits with review comments mentioning "compatibility" issues. |
+| **Sustainability** | **Is Sustaining Or Not** | Defined by: (1) Project is not "retired"; (2) GitHub repository is not archived; (3) Consistent activity, shown by stars (2022-2024) or releases in 2024. |
