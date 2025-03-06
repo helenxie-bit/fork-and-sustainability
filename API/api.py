@@ -228,14 +228,14 @@ class API:
                 for commit in commits_data:
                     commit_sha = commit["sha"]
 
-                    # Check the detail of the commit
-                    commit_url = (
-                        self.url + f"{repo_owner}/{repo_name}/commits/{commit_sha}"
-                    )
-                    commit_response = self.github_api_request(commit_url)
+                    # # Check the detail of the commit
+                    # commit_url = (
+                    #     self.url + f"{repo_owner}/{repo_name}/commits/{commit_sha}"
+                    # )
+                    # commit_response = self.github_api_request(commit_url)
 
-                    if commit_response.status_code == 200:
-                        commit_data = commit_response.json()
+                    # if commit_response.status_code == 200:
+                    #     commit_data = commit_response.json()
 
                     commit_info = {
                         "repo_id": repo_id,
@@ -248,9 +248,9 @@ class API:
                         "commit_author_id": (commit.get("author") or {}).get(
                             "id", "unknown"
                         ),
-                        "commit_size": commit_data.get("stats", {}).get(
-                            "total", 0
-                        ),  # (TODO): Should we keep it or delete it to save requests?
+                        "commit_size": 0,#commit_data.get("stats", {}).get(
+                        #    "total", 0
+                        #),  # (TODO): Should we keep it or delete it to save requests?
                         "commit_created_at": commit["commit"]["author"]["date"],
                         "commit_pushed_at": commit["commit"]["committer"]["date"],
                     }
