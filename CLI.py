@@ -9,6 +9,12 @@ import numpy as np
 import ast
 from datetime import datetime, timedelta
 
+from Analytics.dataset import ForkDataset
+from Analytics.model import MLP
+import torch
+from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
+
 
 def check_file_exists(filepath, msg):
     """Helper function to check if a file exists."""
@@ -1005,6 +1011,69 @@ def datavis(args):
     """Handles dataset visualization (to be implemented)."""
     pass
 
+def runmodel(args):
+    """run learning model to to determine relationships between fork data and success/sustainability"""
+    try:
+        data_df = pd.read_csv(args.input_path)
+    except FileNotFoundError as e:
+        print(f"Error, invalid input path, {e}")
+
+    if args.model == "svm":
+        pass
+    if args.model == "MLP":
+        dataset = ForkDataset(data_df)
+        epochs = 500
+
+        # setup
+        try:
+            device = torch.device(args.device)
+        except:
+            print("error, invalid device")
+            exit(1)
+        
+        MLP_model = MLP()
+        MLP_model.to(device)
+
+        optim = torch.optim.Adam(MLP_model.parameters(), lr=0.001)
+        criterion = torch.nn.BCELoss()
+
+        dataloader = DataLoader(dataset, batch_size=1, shuffle=True)
+
+        writer = SummaryWriter(args.output_path)
+
+        for epoch in range(epochs):
+            losses = []
+            accuracy = []
+            for i, data in enumerate(dataloader):
+                inputs, labels = data
+                inputs, labels = inputs.to(device), labels.to(device)
+
+                optim.zero_grad()
+                output = MLP_model(inputs)
+                output = output.squeeze(1)
+
+                output = output.to(torch.float32)
+                labels = labels.to(torch.float32)
+                if output > 0.5 and labels > 0.5:
+                    accuracy.append(1)
+                elif output <= 0.5 and labels <= 0.5:
+                    accuracy.append(1)
+                else:
+                    accuracy.append(0)
+
+                loss = criterion(output, labels)
+                loss.backward()
+                optim.step()
+
+                losses.append(loss.item())
+            
+            print()
+            print(f"Epoch {epoch} loss: {np.mean(losses)}")
+            print(f"Epoch {epoch} accuracy: {np.mean(accuracy)}")
+            writer.add_scalar("loss", np.mean(losses), epoch)
+            writer.add_scalar("accuracy", np.mean(accuracy), epoch)
+
+        writer.close()
 
 # main entry point for all scripts
 def main():
@@ -1045,6 +1114,33 @@ def main():
 
     # sub parser for dataset analysis
     data_vis = subparsers.add_parser("datavis", help="Visualization of dataset")
+    run_model = subparsers.add_parser("runmodel", help="Run model on dataset")
+    run_model.add_argument(
+        "--model",
+        type=str,
+        choices=["linear", "svm", "random_forest", "MLP"],
+        help="Specify which type of model to run",
+        default="MLP",
+    )
+    run_model.add_argument(
+        "--output_path",
+        type=str,
+        help="specify the directory to save the model output to",
+        default="./output",
+    )
+    run_model.add_argument(
+        "--input_path",
+        type=str,
+        help="specify the directory to load the model input from",
+        default="./data/11_final_data.csv",
+    )
+    run_model.add_argument(
+        "--device",
+        type=str,
+        choices=["cpu", "cuda:0"],
+        help="specify the device to run the model on",
+        default="cuda:0",
+    )
 
     args = parser.parse_args()
     if args.subparser_name == "datavis":
@@ -1053,6 +1149,11 @@ def main():
         datapre(args)
     elif args.subparser_name == "dataget":
         dataget(args)
+    elif args.subparser_name == "runmodel":
+        runmodel(args)
+    else:
+        print("Error: Invalid subcommand.")
+        exit(1)
 
 
 if __name__ == "__main__":
