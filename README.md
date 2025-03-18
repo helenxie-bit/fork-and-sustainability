@@ -51,6 +51,7 @@ Use the following command to preprocess data:
 
 ```bash
 python CLI.py datapre --step <1-3>
+```
 
 Based on the collected data, we constructed measures for fork-related factors and sustainability labels, as summarized in the following table:
 
