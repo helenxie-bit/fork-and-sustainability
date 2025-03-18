@@ -47,23 +47,32 @@ python CLI.py dataget --choice <3-6> --name <teammate name>
 
 
 ## **Data Preprocessing**
-Using the collected data, we constructed measures for fork-related factors and sustainability labels, as summarized in the following table:
+Use the following command to preprocess data:
+
+```bash
+python CLI.py datapre --step <1-3>
+
+Based on the collected data, we constructed measures for fork-related factors and sustainability labels, as summarized in the following table:
 
 | **Type** | **Measure** | **Explanation** |
 |----------|------------|----------------|
 | **General** | **Project Age** | Duration from project creation date to current date. |
 |  | **Project Size** | Total size of the project repository (in KB). |
 | **Fork-Related Factors (RQ1)** | **Total Forks** | Total number of forks. |
-|  | **Annual Forks** | Number of forks created per year. |
+|  | **Annual Forks Growth Rate** | Percentage of change of number of forks created per year. |
 | **Fork-Related Factors (RQ2)** | **Contributed Back Forks** | Number of forks that made commits back. |
 |  | **Hard Forks** | Number of forks meeting criteria: (1) Over 2 pull requests; or (2) Over 100 unmerged commits with project name changed. |
 |  | **Inactive Forks** | Number of forks with no commits. |
 | **Fork-Related Factors (RQ3)** | **Merged Commits** | Total number of merged commits. |
-|  | **Annual Merged Commits** | Number of merged commits pushed per year. |
+|  | **Annual Merged Commits Growth Rate** | Percentage of change of number of merged commits pushed per year. |
 |  | **Unmerged Commits** | Total number of unmerged commits. |
-|  | **Annual Unmerged Commits** | Number of unmerged commits pushed per year. |
+|  | **Annual Unmerged Commits Growth Rate** | Percentage of change of number of unmerged commits pushed per year. |
 |  | **Fork-Only Commits** | Total number of commits exclusive to forks. |
-|  | **Annual Fork-Only Commits** | Number of commits exclusive to forks per year. |
+|  | **Annual Fork-Only Commits Growth Rate** | Percentage of change of number of commits exclusive to forks per year. |
 | **Fork-Related Factors (RQ4)** | **Average Time Taken to Merge** | Average time from pull request creation to merge. |
 | **Fork-Related Factors (RQ5)** | **Ratio of Compatibility Issues** | Proportion of unmerged commits with review comments mentioning "compatibility" issues. |
 | **Sustainability** | **Is Sustaining Or Not** | Defined by: (1) Project is not "retired"; (2) GitHub repository is not archived; (3) Consistent activity, shown by stars (2022-2024) or releases in 2024. |
+
+
+## **Data Analysis**
+Please refer to the notebooks in this repository.
